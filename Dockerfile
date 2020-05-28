@@ -36,6 +36,10 @@ RUN set -ex \
         libssl-dev \
         libffi-dev \
         libpq-dev \
+        python3-dev \
+        unixodbc-dev \
+        python-dev \
+        libldap2-dev \
         git \
     ' \
     && apt-get update -yqq \
@@ -50,6 +54,7 @@ RUN set -ex \
         rsync \
         netcat \
         locales \
+        gnupg2 \
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
@@ -59,8 +64,12 @@ RUN set -ex \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
-    && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
+    && pip3 uninstall SQLAlchemy \
+    && pip3 install SQLAlchemy==1.3.15 \
+    && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mssql,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis==3.2' \
+    && pip3 install pyodbc \
+    && pip install python-ldap \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
@@ -83,4 +92,5 @@ EXPOSE 8080 5555 8793
 USER airflow
 WORKDIR ${AIRFLOW_USER_HOME}
 ENTRYPOINT ["/entrypoint.sh"]
+USER airflow
 CMD ["webserver"]
